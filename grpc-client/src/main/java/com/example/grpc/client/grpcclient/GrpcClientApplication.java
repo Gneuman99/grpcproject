@@ -9,6 +9,8 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 
 @SpringBootApplication
@@ -47,5 +49,12 @@ public class GrpcClientApplication extends SpringBootServletInitializer {
 		channel.shutdown();*/
 //		SpringApplication.run(GrpcClientApplication.class, args);
 	}
+	@Bean(name="multipartResolver")
+ 	public CommonsMultipartResolver multipartResolver() {
+ 	CommonsMultipartResolver multi = new CommonsMultipartResolver();
+ 	multi.setMaxUploadSize(100000);
+
+ 	return multi;
+ }
 
 }
