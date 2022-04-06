@@ -97,7 +97,9 @@ public class PingPongEndpoint {
 				return "Matrices are not the same dimensions";
 			}
 
-			return matrixToString(matrix1) + "<br>" + matrixToString(matrix2);
+			int[][] result = GRPCClientService.matrixMultiply(matrix1, matrix2);
+
+			return matrixToString(result);
 		}
 	
 	

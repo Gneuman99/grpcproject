@@ -62,4 +62,11 @@ public class GRPCClientService {
                 String resp=A.getC00()+A.getC01()+A.getC10()+A.getC11()+"";
                 return resp;
     }
+
+    public static int[][] matrixMultiply(int[][] matrix1, int[][] matrix2) {
+
+        return new int[4][4];
+    }
+
+
 }
