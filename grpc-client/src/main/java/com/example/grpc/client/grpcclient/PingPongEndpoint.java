@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.io.File;  // Import the File class
+import java.io.FileNotFoundException;  // Import this class to handle errors
+import java.util.Scanner; 
 
 
 import java.nio.charset.StandardCharsets;
@@ -59,15 +62,17 @@ public class PingPongEndpoint {
 
 		@RequestMapping(value = "/uploadFile", method = RequestMethod.POST)//where the form actualy SENDS the file TO using POST
 		@ResponseBody //the same
-		public String uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+		public String uploadFile(@RequestParam("matrix1") MultipartFile file1, @RequestParam("matrix2") MultipartFile file2, HttpServletRequest request) {
 	   //
 		try {
 	   
-		String uploadDir = "/uploads/";
 		String realPath = "/home/gneuman_uk_gmail_com/grpcproject";
 	   
-		File transferFile = new File(realPath + "/" + file.getOriginalFilename()); 
-		file.transferTo(transferFile);
+		File transferFile1 = new File(realPath + "/matrix1.txt"); 
+		file1.transferTo(transferFile1);
+		File transferFile2 = new File(realPath + "/matrix2.txt"); 
+		file2.transferTo(transferFile2);
+		
 		System.out.println(realPath);
 	   
 		} catch (Exception e) {
@@ -76,10 +81,60 @@ public class PingPongEndpoint {
 	   
 		return "Failure";
 		}
-	   
-		return "Success";
+	    
+		return "<script>window.location.replace('/matrixMultiply');</script>";
 		}
 		
-	//@GetMapping("/") html links 
+
+		@GetMapping(value = "/matrixMultiply")//reads matrices from files and multiplies them
+		@ResponseBody //the same
+		public static String matrixMultiply(){
+			int[][] matrix1 = readFile("matrix1.txt");
+			int[][] matrix2 = readFile("matrix2.txt");
+
+			//Check if matrices are the same dimensions
+			if(matrix1.length != matrix2.length || matrix1[0].length != matrix2[0].length){
+				return "Matrices are not the same dimensions";
+			}
+
+			return matrixToString(matrix1) + "<br>" + matrixToString(matrix2);
+		}
 	
+	
+		//Convert matrix to string
+		public static String matrixToString(int[][] matrix){
+			String matrixString = "";
+			for(int i = 0; i < matrix.length; i++){
+				for(int j = 0; j < matrix[i].length; j++){
+					matrixString += matrix[i][j] + " ";
+				}
+				matrixString += "<br>";
+			}
+			return matrixString;
+		}
+
+
+		public static int[][] readFile(String fileName){
+			File file = new File("/home/gneuman_uk_gmail_com/grpcproject/" + fileName);
+			int[][] value = null;
+			try {
+				Scanner sizeScanner = new Scanner(file);
+				String[] temp = sizeScanner.nextLine().split(" ");
+				sizeScanner.close();
+				int nMatrix = temp.length;
+			
+				Scanner scanner = new Scanner(file);
+				value = new int[nMatrix][nMatrix];
+				for (int i = 0; i < nMatrix; i++) {
+					String[] numbers = scanner.nextLine().split(" ");
+					for (int j = 0; j < nMatrix; j++) {
+						value[i][j] = Integer.parseInt(numbers[j]);
+					}
+				}
+				scanner.close();
+			
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();}
+			return value;
+		}
 }

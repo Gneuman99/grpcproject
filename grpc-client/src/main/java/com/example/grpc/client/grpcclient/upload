@@ -1,18 +1,18 @@
 <html>
 <body>
- <h2>Spring MVC file upload using Annotation configuration Metadata</h2>
+ <h2>Spring MVC file upload</h2>
 
  Upload File :
 
  <form name="fileUpload" method="POST" action="uploadFile" enctype="multipart/form-data">
- <label>Select File</label> <br />
- <input type="file" name="file" />
+ <label>Select matrix 1</label> <br />
+ <input type="file" name="matrix1" />
+
+ <br>
+ <label>Select matrix 2</label> <br />
+ <input type="file" name="matrix2" />
  <input type="submit" name="submit" value="Upload" />
  </form>
-<form name="fileUpload" method="POST" action="uploadFile" enctype="multipart/form-data">
- <label>Select File</label> <br />
- <input type="file" name="file" />
- <input type="submit" name="submit" value="Upload" />
- </form>
+ 
 </body>
 </html>

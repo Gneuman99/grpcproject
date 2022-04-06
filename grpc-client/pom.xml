@@ -54,6 +54,13 @@
         </dependency>
 
 		<!-- For the client (only) -->
+
+
+		<dependency> <!-- hot reload server dependency -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>net.devh</groupId>
 			<artifactId>grpc-client-spring-boot-starter</artifactId>
