@@ -2,6 +2,7 @@ package com.example.grpc.client.grpcclient;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import io.grpc.Server;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;  // Import the File class
 import java.io.FileNotFoundException;  // Import this class to handle errors
+import java.io.FileReader;
 import java.util.Scanner; 
 
 
@@ -88,7 +90,7 @@ public class PingPongEndpoint {
 
 		@GetMapping(value = "/matrixMultiply")//reads matrices from files and multiplies them
 		@ResponseBody //the same
-		public static String matrixMultiply(){
+		public static String matrixMultiply() throws IOException{
 			int[][] matrix1 = readFile("matrix1.txt");
 			int[][] matrix2 = readFile("matrix2.txt");
 
@@ -96,6 +98,19 @@ public class PingPongEndpoint {
 			if(matrix1.length != matrix2.length || matrix1[0].length != matrix2[0].length){
 				return "Matrices are not the same dimensions";
 			}
+
+			//Check if matrices are square
+			printMatrix(matrix1);
+			if(matrix1.length != matrix1[0].length){
+				return "Matrices are not square";
+			}
+
+			int width = matrix1.length;
+			//Check if matrix width is a power of 2
+			if(width != (int)Math.pow(2, Math.floor(Math.log(width)/Math.log(2)))){
+				return "Matrix width is not a power of 2";
+			}
+			
 
 			int[][] result = GRPCClientService.matrixMultiply(matrix1, matrix2);
 
@@ -116,20 +131,38 @@ public class PingPongEndpoint {
 		}
 
 
-		public static int[][] readFile(String fileName){
-			File file = new File("/home/gneuman_uk_gmail_com/grpcproject/" + fileName);
+		public static void printMatrix(int[][] matrix){
+			for(int i = 0; i < matrix.length; i++){
+				for(int j = 0; j < matrix[i].length; j++){
+					System.out.print(matrix[i][j] + " ");
+				}
+				System.out.println();
+			}
+		}
+
+		public static int[][] readFile(String fileName) throws IOException{
+			fileName = "/home/gneuman_uk_gmail_com/grpcproject/" + fileName;
+			File file = new File(fileName);
 			int[][] value = null;
 			try {
+
+				//From stackoverflow
+				int height = 0;
+				BufferedReader br = new BufferedReader(new FileReader(fileName));
+					while (br.readLine() != null) height++;
+				br.close();
+
+
 				Scanner sizeScanner = new Scanner(file);
 				String[] temp = sizeScanner.nextLine().split(" ");
 				sizeScanner.close();
-				int nMatrix = temp.length;
-			
+				int width = temp.length;
+
 				Scanner scanner = new Scanner(file);
-				value = new int[nMatrix][nMatrix];
-				for (int i = 0; i < nMatrix; i++) {
+				value = new int[height][width];
+				for (int i = 0; i < height; i++) {
 					String[] numbers = scanner.nextLine().split(" ");
-					for (int j = 0; j < nMatrix; j++) {
+					for (int j = 0; j < width; j++) {
 						value[i][j] = Integer.parseInt(numbers[j]);
 					}
 				}
@@ -139,4 +172,5 @@ public class PingPongEndpoint {
 				e.printStackTrace();}
 			return value;
 		}
+
 }

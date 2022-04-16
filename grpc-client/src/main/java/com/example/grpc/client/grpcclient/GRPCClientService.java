@@ -66,6 +66,14 @@ public class GRPCClientService {
     }
 
     public static int[][] matrixMultiply(int[][] matrix1, int[][] matrix2) {
+        int[][][] submatrices = matrixToSubmatrices(matrix1);
+        int[][] matrixMerge = submatricesToMatrix(submatrices);
+        printMatrix(matrixMerge);
+
+        printMatrix(submatrices[1]);
+        printMatrix(submatrices[2]);
+        printMatrix(submatrices[3]);
+
         
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost",9090)
                 .usePlaintext()
@@ -91,7 +99,17 @@ public class GRPCClientService {
     }
 
 
-    public static int[][] unpackMatrixArbitraryReply(MatrixArbitraryReply reply) {
+
+    private static void printMatrix(int[][] matrix) {
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix.length; j++) {
+                System.out.print(matrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+public static int[][] unpackMatrixArbitraryReply(MatrixArbitraryReply reply) {
         int size = (int) Math.sqrt( (double) reply.getMatrixCount() );
 
         //Unpack request into 2D array
@@ -106,7 +124,43 @@ public class GRPCClientService {
 
         return matrix;
     }
+    //turns matrix into 4 submatrices   
+    public static int[][][] matrixToSubmatrices(int[][] matrix) {
+        int size = matrix.length /2;
+        int[][][] submatrices = new int[4][size][size];
+        //System.out.println("size" + size);
+        for(int i=0;i<size;i++)
+        {
+                for(int j=0;j<size;j++)
+                {
+                        submatrices[0][i][j]=matrix[i][j];
+                        submatrices[1][i][j]=matrix[i][j+size];
+                        submatrices[2][i][j]=matrix[i+size][j];
+                        submatrices[3][i][j]=matrix[i+size][j+size];
+                }
+        }
 
+        return submatrices;
+    }
+
+
+    //merge 4 submatrices into 1
+        public static int[][] submatricesToMatrix(int[][][] submatrices) {
+                int size = submatrices[0].length;
+                int[][] matrix = new int[size*2][size*2];
+                for(int i=0;i<size;i++)
+                {
+                        for(int j=0;j<size;j++)
+                        {
+                                matrix[i][j]=submatrices[0][i][j];
+                                matrix[i][j+size]=submatrices[1][i][j];
+                                matrix[i+size][j]=submatrices[2][i][j];
+                                matrix[i+size][j+size]=submatrices[3][i][j];
+                        }
+                }
+        
+                return matrix;
+        }
 
 
 }
