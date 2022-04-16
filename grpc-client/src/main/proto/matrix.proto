@@ -24,6 +24,8 @@ package matrixmult;
 service MatrixService{
   rpc MultiplyBlock (MatrixRequest) returns (MatrixReply) {}
   rpc AddBlock (MatrixRequest) returns (MatrixReply) {}
+  rpc MultiplyArbitrary (MatrixArbitraryRequest) returns (MatrixArbitraryReply) {}
+  rpc AddArbitrary (MatrixArbitraryRequest) returns (MatrixArbitraryReply) {}
 }
 
 // The request message containing the two matricies
@@ -47,3 +49,13 @@ message MatrixReply {
 }
 
 
+// request message for an arbitrary sized matrix
+message MatrixArbitraryRequest {
+  repeated int32 matrix1 = 1 [packed = true];
+  repeated int32 matrix2 = 2 [packed = true];
+}
+
+// response message for an arbitrary sized matrix
+message MatrixArbitraryReply {
+  repeated int32 matrix = 1 [packed = true];
+}
