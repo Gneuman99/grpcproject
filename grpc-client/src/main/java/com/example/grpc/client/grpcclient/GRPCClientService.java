@@ -4,6 +4,8 @@ import com.example.grpc.server.grpcserver.PingRequest;
 import com.example.grpc.server.grpcserver.PongResponse;
 import com.example.grpc.server.grpcserver.PingPongServiceGrpc;
 import com.example.grpc.server.grpcserver.MatrixRequest;
+import com.example.grpc.server.grpcserver.MatrixArbitraryReply;
+import com.example.grpc.server.grpcserver.MatrixArbitraryRequest;
 import com.example.grpc.server.grpcserver.MatrixReply;
 import com.example.grpc.server.grpcserver.MatrixServiceGrpc;
 import io.grpc.ManagedChannel;
@@ -64,9 +66,47 @@ public class GRPCClientService {
     }
 
     public static int[][] matrixMultiply(int[][] matrix1, int[][] matrix2) {
+        
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost",9090)
+                .usePlaintext()
+                .build();
+        MatrixServiceGrpc.MatrixServiceBlockingStub stub = MatrixServiceGrpc.newBlockingStub(channel);
 
-        return new int[4][4];
+        MatrixArbitraryRequest.Builder builder = MatrixArbitraryRequest.newBuilder();
+
+        for (int i = 0; i < matrix1.length; i++) {
+            for (int j = 0; j < matrix1.length; j++) {
+                builder.addMatrix1(matrix1[i][j]);
+                builder.addMatrix2(matrix2[i][j]);
+            }
+        }
+
+        MatrixArbitraryRequest request = builder.build();
+
+        MatrixArbitraryReply response = stub.multiplyArbitrary(request);
+
+        int[][] result = unpackMatrixArbitraryReply(response);
+
+        return result;
     }
+
+
+    public static int[][] unpackMatrixArbitraryReply(MatrixArbitraryReply reply) {
+        int size = (int) Math.sqrt( (double) reply.getMatrixCount() );
+
+        //Unpack request into 2D array
+        int[][] matrix = new int[size][size];
+        for(int i=0;i<size;i++)
+        {
+                for(int j=0;j<size;j++)
+                {
+                        matrix[i][j]=reply.getMatrix(i*size+j);
+                }
+        }
+
+        return matrix;
+    }
+
 
 
 }
