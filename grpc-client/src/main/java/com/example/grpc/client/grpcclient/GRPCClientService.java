@@ -2,6 +2,7 @@ package com.example.grpc.client.grpcclient;
 
 import com.example.grpc.server.grpcserver.PingRequest;
 import com.example.grpc.server.grpcserver.PongResponse;
+import com.example.grpc.server.grpcserver.MatrixServiceGrpc.MatrixServiceBlockingStub;
 import com.example.grpc.server.grpcserver.PingPongServiceGrpc;
 import com.example.grpc.server.grpcserver.MatrixRequest;
 import com.example.grpc.server.grpcserver.MatrixArbitraryReply;
@@ -66,37 +67,43 @@ public class GRPCClientService {
     }
 
     public static int[][] matrixMultiply(int[][] matrix1, int[][] matrix2) {
-        int[][][] submatrices = matrixToSubmatrices(matrix1);
-        int[][] matrixMerge = submatricesToMatrix(submatrices);
-        printMatrix(matrixMerge);
+         int[][][] submatrices1 = matrixToSubmatrices(matrix1);
+         int[][][] submatrices2 = matrixToSubmatrices(matrix2);
+        // int[][] matrixMerge = submatricesToMatrix(submatrices);
+        // //printMatrix(matrixMerge);
 
-        printMatrix(submatrices[1]);
-        printMatrix(submatrices[2]);
-        printMatrix(submatrices[3]);
+        // printMatrix(submatrices[1]);
+        // printMatrix(submatrices[2]);
+        // printMatrix(submatrices[3]);
+        int submatrixWidth = submatrices1[0].length;
+        MatrixServiceBlockingStub[] stubs = createBlockingStubs(createChannels(8));
+        int[][][] multiplicationResults = new int[8][submatrices1[0].length][submatrices1[0].length];//8 because storing 8 matrices, 
+        multiplicationResults[0] = sendMultiplicationRequest(stubs[0], submatrices1[0], submatrices2[0]);
+        multiplicationResults[1] = sendMultiplicationRequest(stubs[1], submatrices1[1], submatrices2[2]);
+        multiplicationResults[2] = sendMultiplicationRequest(stubs[2], submatrices1[0], submatrices2[1]);
+        multiplicationResults[3] = sendMultiplicationRequest(stubs[3], submatrices1[1], submatrices2[3]);
+        multiplicationResults[4] = sendMultiplicationRequest(stubs[4], submatrices1[2], submatrices2[0]);
+        multiplicationResults[5] = sendMultiplicationRequest(stubs[5], submatrices1[3], submatrices2[2]);
+        multiplicationResults[6] = sendMultiplicationRequest(stubs[6], submatrices1[2], submatrices2[1]);
+        multiplicationResults[7] = sendMultiplicationRequest(stubs[7], submatrices1[3], submatrices2[3]);
 
-        
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost",9090)
-                .usePlaintext()
-                .build();
-        MatrixServiceGrpc.MatrixServiceBlockingStub stub = MatrixServiceGrpc.newBlockingStub(channel);
 
-        MatrixArbitraryRequest.Builder builder = MatrixArbitraryRequest.newBuilder();
+        //send addition of every other matrix in the multiplication results 
+        //make addition results matrix array of 4 matrices 
+        int[][][] additionResults = new int[4][submatrixWidth][submatrixWidth];//4 because 4 matrices, 
+        //send addition request for each matrix in the multiplication results
+        additionResults[0] = sendAdditionRequest(stubs[0], multiplicationResults[0], multiplicationResults[1]);
+        additionResults[1] = sendAdditionRequest(stubs[1], multiplicationResults[2], multiplicationResults[3]);
+        additionResults[2] = sendAdditionRequest(stubs[2], multiplicationResults[4], multiplicationResults[5]);
+        additionResults[3] = sendAdditionRequest(stubs[3], multiplicationResults[6], multiplicationResults[7]);
 
-        for (int i = 0; i < matrix1.length; i++) {
-            for (int j = 0; j < matrix1.length; j++) {
-                builder.addMatrix1(matrix1[i][j]);
-                builder.addMatrix2(matrix2[i][j]);
-            }
-        }
-
-        MatrixArbitraryRequest request = builder.build();
-
-        MatrixArbitraryReply response = stub.multiplyArbitrary(request);
-
-        int[][] result = unpackMatrixArbitraryReply(response);
-
-        return result;
+        //merge the addition results into one matrix
+        int[][] matrixMerge = submatricesToMatrix(additionResults);
+        //printMatrix(matrixMerge);
+        return matrixMerge;
     }
+    //
+
 
 
 
@@ -161,6 +168,79 @@ public static int[][] unpackMatrixArbitraryReply(MatrixArbitraryReply reply) {
         
                 return matrix;
         }
+        //create array of async channels
+        public static ManagedChannel[] createChannels(int numChannels) {
+                String[] addreses = {"10.128.0.4","10.128.0.6", "10.128.0.8","10.128.0.9","10.128.0.10","10.128.0.11","10.128.0.12","10.128.0.13"};//copy the rest of the internal ip addresses here
+                ManagedChannel[] channels = new ManagedChannel[numChannels];
+                for (int i = 0; i < numChannels; i++) {
+                        channels[i] = ManagedChannelBuilder.forAddress(addreses[i],9090)
+                                .usePlaintext()
+                                .build();
+                                System.out.println(i);
+                }
+                return channels;
+        }
+        // //create array of async stubs
+        // public static MatrixServiceGrpc.MatrixServiceStub[] createStubs(ManagedChannel[] channels) {
+        //         MatrixServiceGrpc.MatrixServiceStub[] stubs = new MatrixServiceGrpc.MatrixServiceStub[channels.length];
+        //         for (int i = 0; i < channels.length; i++) {
+        //                 stubs[i] = MatrixServiceGrpc.newStub(channels[i]);
+        //         }
+        //         return stubs;
+        // }
+        //create array of blocking stubs        
+        public static MatrixServiceGrpc.MatrixServiceBlockingStub[] createBlockingStubs(ManagedChannel[] channels) {
+                MatrixServiceGrpc.MatrixServiceBlockingStub[] stubs = new MatrixServiceGrpc.MatrixServiceBlockingStub[channels.length];
+                for (int i = 0; i < channels.length; i++) {
+                        stubs[i] = MatrixServiceGrpc.newBlockingStub(channels[i]);
+                }
+                return stubs;
+        }
+        // send multiplication request to a stub
+        public static int[][] sendMultiplicationRequest(MatrixServiceGrpc.MatrixServiceBlockingStub stub, int[][] matrix1, int[][] matrix2) {
+                MatrixArbitraryRequest.Builder builder = MatrixArbitraryRequest.newBuilder();
+
+                for (int i = 0; i < matrix1.length; i++) {
+                        for (int j = 0; j < matrix1.length; j++) {
+                                builder.addMatrix1(matrix1[i][j]);
+                                builder.addMatrix2(matrix2[i][j]);
+                        }
+                }
+
+                MatrixArbitraryRequest request = builder.build();
+
+                MatrixArbitraryReply response = stub.multiplyArbitrary(request);
+                System.out.println(response);
+
+                int[][] result = unpackMatrixArbitraryReply(response);
+
+                return result;
+                
+                   
+           
+        }
+        public static int[][] sendAdditionRequest(MatrixServiceGrpc.MatrixServiceBlockingStub stub, int[][] matrix1, int[][] matrix2) {
+                MatrixArbitraryRequest.Builder builder = MatrixArbitraryRequest.newBuilder();
+
+                for (int i = 0; i < matrix1.length; i++) {
+                        for (int j = 0; j < matrix1.length; j++) {
+                                builder.addMatrix1(matrix1[i][j]);
+                                builder.addMatrix2(matrix2[i][j]);
+                        }
+                }
+
+                MatrixArbitraryRequest request = builder.build();
+
+                MatrixArbitraryReply response = stub.addArbitrary(request);
+
+                int[][] result = unpackMatrixArbitraryReply(response);
+
+                return result;
+                
+        }
+
+
+
 
 
 }
