@@ -84,26 +84,36 @@ public class GRPCClientService {
                                                                                                              // storing
                                                                                                              // 8
                                                                                                              // matrices,
-                long startTime = System.nanoTime();
-                multiplicationResults[0] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[0],
+                long startTime = System.currentTimeMillis();
+                multiplicationResults[0] = sendMultiplicationRequest(stubs[getNextStub(5)], submatrices1[0],
                                 submatrices2[0]);
-                long endTime = System.nanoTime();
+                long endTime = System.currentTimeMillis();
                 footprints = endTime - startTime;
                 System.out.println("Time taken: " + footprints);
+                System.out.println("stubnumber " + stubNumber);
+                
                 multiplicationResults[1] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[1],
                                 submatrices2[2]);
+                                System.out.println("Time taken: " + footprints);
+                System.out.println("stubnumber " + stubNumber);
                 multiplicationResults[2] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[0],
                                 submatrices2[1]);
+                                System.out.println("stubnumber " + stubNumber);
                 multiplicationResults[3] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[1],
                                 submatrices2[3]);
+                                System.out.println("stubnumber " + stubNumber);
                 multiplicationResults[4] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[2],
                                 submatrices2[0]);
+                                System.out.println("stubnumber " + stubNumber);
                 multiplicationResults[5] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[3],
                                 submatrices2[2]);
+                                System.out.println("stubnumber " + stubNumber);
                 multiplicationResults[6] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[2],
                                 submatrices2[1]);
+                                System.out.println("stubnumber " + stubNumber);
                 multiplicationResults[7] = sendMultiplicationRequest(stubs[getNextStub(numServer)], submatrices1[3],
                                 submatrices2[3]);
+                                System.out.println("numserver " + numServer);
 
                 // send addition of every other matrix in the multiplication results
                 // make addition results matrix array of 4 matrices
@@ -186,7 +196,7 @@ public class GRPCClientService {
 
         // create array of async channels
         public static ManagedChannel[] createChannels(int numChannels) {
-                String[] addreses = { "10.128.0.4", "10.128.0.6", "10.128.0.8", "10.128.0.9", "10.128.0.10",
+                String[] addreses = { "110.128.0.14", "10.128.0.6", "10.128.0.8", "10.128.0.9", "10.128.0.10",
                                 "10.128.0.11", "10.128.0.12", "10.128.0.13" };// copy the rest of the internal ip
                                                                               // addresses here
                 ManagedChannel[] channels = new ManagedChannel[numChannels];
@@ -264,18 +274,21 @@ public class GRPCClientService {
 
         public static int stubNumber = 0;
         public static long footprints;
-        public static int footprint = (int) footprints;
-        public static int deadline = 40;
+        public static int footprint = (int) footprints;//turns long iq into int
+        public static int deadline = 50;        
         public static int numServer = (footprint * 8) / deadline;
 
-        // getNextStub loops through all the numbers until it reaches the max
+        // getNextStub
         public static int getNextStub(int max) {
                 stubNumber = stubNumber + 1;
-                if (stubNumber == max) {
+                System.out.println("max in getNextStub" + max);
+                //System.out.println(stubNumber);
+                if (stubNumber == max || stubNumber == 8) {
                         stubNumber = 0;
                 }
                 return stubNumber;
 
         }
+
 
 }
